@@ -441,16 +441,35 @@ st.markdown(
         height:2.75rem;
         padding:0 1.15rem;
         border-radius:9px;
-        color:#405A73 !important;
-        font-weight:650;
+        border:1px solid transparent;
+        color:#0B3A63 !important;
+        font-weight:750 !important;
+        opacity:1 !important;
       }
-      [data-baseweb="tab"] p { color:#405A73 !important; font-weight:650; }
-      [data-baseweb="tab"]:hover { background:#EEF4F9; }
+      [data-baseweb="tab"] p,
+      [data-baseweb="tab"] span,
+      [data-baseweb="tab"] div {
+        color:#0B3A63 !important;
+        font-weight:750 !important;
+        opacity:1 !important;
+      }
+      [data-baseweb="tab"]:hover {
+        background:#E8F1F8 !important;
+        border-color:#C5D7E5;
+      }
       [data-baseweb="tab"][aria-selected="true"] {
-        background:var(--navy) !important;
+        background:linear-gradient(135deg, #0B3A63 0%, #155E91 100%) !important;
+        border-color:#082E4F !important;
         color:#FFFFFF !important;
+        box-shadow:0 4px 12px rgba(11,58,99,.22);
       }
-      [data-baseweb="tab"][aria-selected="true"] p { color:#FFFFFF !important; }
+      [data-baseweb="tab"][aria-selected="true"] p,
+      [data-baseweb="tab"][aria-selected="true"] span,
+      [data-baseweb="tab"][aria-selected="true"] div {
+        color:#FFFFFF !important;
+        font-weight:750 !important;
+        opacity:1 !important;
+      }
       [data-baseweb="tab-highlight"] { display:none; }
       [data-testid="stPlotlyChart"] {
         background:var(--card); border:1px solid var(--line); border-radius:15px;
@@ -1168,21 +1187,58 @@ with schedule_tab:
         text_auto=True,
         labels={"Responsible": "Parner"},
     )
-    fig_monthly.update_xaxes(dtick="M1", tickformat="%b\n%Y")
+    fig_monthly.update_traces(
+        textfont=dict(color="#FFFFFF", size=11, family="Segoe UI"),
+        marker_line_color="#FFFFFF",
+        marker_line_width=0.7,
+    )
+    fig_monthly.update_xaxes(
+        dtick="M1",
+        tickformat="%b\n%Y",
+        title_text="Plan Month",
+        title_font=dict(size=14, color="#183B5B", family="Segoe UI"),
+        tickfont=dict(size=11, color="#304B63", family="Segoe UI"),
+        linecolor="#9FB3C5",
+        linewidth=1.2,
+        tickcolor="#7F96AA",
+        ticks="outside",
+        showline=True,
+        showgrid=False,
+        automargin=True,
+    )
     fig_monthly.update_yaxes(
         gridcolor="#E2E9F0",
         zerolinecolor="#CBD8E4",
         title_text="Documents",
+        title_font=dict(size=14, color="#183B5B", family="Segoe UI"),
+        tickfont=dict(size=11, color="#304B63", family="Segoe UI"),
+        linecolor="#9FB3C5",
+        linewidth=1.2,
+        tickcolor="#7F96AA",
+        ticks="outside",
+        showline=True,
+        automargin=True,
     )
     fig_monthly.update_layout(
         template="plotly_white",
         height=520,
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
-        font=dict(color="#1B334A", family="Segoe UI"),
-        title=dict(font=dict(size=18, color="#0B3A63"), x=0.02, xanchor="left"),
-        legend=dict(title_text="Parner", bgcolor="rgba(255,255,255,.75)"),
-        margin=dict(l=45, r=20, t=70, b=30),
+        font=dict(color="#1B334A", size=12, family="Segoe UI"),
+        title=dict(
+            font=dict(size=18, color="#082E4F", family="Segoe UI"),
+            x=0.02,
+            xanchor="left",
+        ),
+        legend=dict(
+            title=dict(text="Parner", font=dict(size=13, color="#183B5B", family="Segoe UI")),
+            font=dict(size=12, color="#304B63", family="Segoe UI"),
+            bgcolor="rgba(255,255,255,.96)",
+            bordercolor="#D2DEE9",
+            borderwidth=1,
+            itemsizing="constant",
+        ),
+        margin=dict(l=58, r=28, t=72, b=55),
     )
     st.plotly_chart(fig_monthly, width="stretch")
 
