@@ -17,15 +17,13 @@ from datetime import date, datetime
 from io import BytesIO
 import json
 from pathlib import Path
-import re
 from typing import BinaryIO
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 SHEET_NAME = "Phase-2 Deliverables"
@@ -304,56 +302,191 @@ st.markdown(
     """
     <style>
       :root {
-        --navy:#174A7E; --deep-navy:#0F4C81; --blue:#1473E6;
-        --teal:#00B8C4; --orange:#FF9818;
-        --line:#D7E3EF; --grid:#DCE7F2; --page:#EEF4FA; --card:#FFFFFF;
+        color-scheme:light;
+        --ink:#13283F; --muted:#526A82;
+        --navy:#0B3A63; --deep-navy:#082E4F; --blue:#1E6FAE;
+        --teal:#0B8F92; --orange:#E67E22;
+        --line:#D2DEE9; --grid:#DFE7EF; --page:#F3F6FA;
+        --card:#FFFFFF; --soft-blue:#E9F2FA; --soft-teal:#E8F6F5;
+        --shadow:0 10px 28px rgba(24,53,82,.09);
       }
-      .stApp { background:var(--page); color:var(--navy); }
-      [data-testid="stAppViewContainer"] { background:var(--page); }
-      [data-testid="stHeader"] { background:rgba(238,244,250,.95); }
-      [data-testid="stSidebar"] { background:#E7F0F8; }
+      html, body, [class*="st-"] {
+        font-family:"Segoe UI", Inter, Arial, sans-serif;
+      }
+      .stApp {
+        color:var(--ink);
+        background:
+          radial-gradient(circle at 92% 0%, rgba(30,111,174,.10), transparent 28rem),
+          linear-gradient(180deg, #F8FAFC 0%, var(--page) 55%, #EDF2F7 100%);
+      }
+      [data-testid="stAppViewContainer"] { background:transparent; }
+      [data-testid="stHeader"] {
+        background:rgba(248,250,252,.94);
+        border-bottom:1px solid rgba(210,222,233,.85);
+        backdrop-filter:blur(12px);
+      }
+      [data-testid="stSidebar"] {
+        background:linear-gradient(180deg, #EDF3F8 0%, #E5EDF5 100%);
+        border-right:1px solid #CBD8E4;
+      }
+      [data-testid="stSidebar"] h1,
+      [data-testid="stSidebar"] h2,
+      [data-testid="stSidebar"] h3,
+      [data-testid="stSidebar"] p,
+      [data-testid="stSidebar"] label { color:var(--ink); }
+      [data-testid="stSidebar"] [data-baseweb="select"] > div,
+      [data-testid="stSidebar"] [data-baseweb="input"] > div,
+      [data-testid="stSidebar"] input {
+        background:#FFFFFF !important;
+        color:var(--ink) !important;
+        border-color:#C4D3E0 !important;
+      }
+      [data-testid="stSidebar"] [data-baseweb="tag"] {
+        background:#D9EAF5 !important;
+        border:1px solid #BCD4E5 !important;
+      }
+      [data-testid="stSidebar"] [data-baseweb="tag"] span {
+        color:#173A57 !important;
+      }
       [data-testid="stAppDeployButton"], [data-testid="stToolbar"], #MainMenu {
         display:none !important;
       }
-      .block-container { max-width: 1680px; padding-top: 1rem; padding-bottom: 2rem; }
+      .block-container {
+        max-width:1680px;
+        padding-top:1.35rem;
+        padding-bottom:2.5rem;
+      }
+      h1, h2, h3 {
+        color:var(--navy) !important;
+        letter-spacing:-.02em;
+      }
+      h1 { font-size:2.25rem !important; font-weight:800 !important; }
+      h2 { font-weight:750 !important; }
+      h3 { font-weight:700 !important; }
+      p, li, label, [data-testid="stCaptionContainer"] {
+        color:var(--ink);
+      }
+      [data-testid="stCaptionContainer"] {
+        background:#E9F1F8;
+        border:1px solid #D0DFEB;
+        border-radius:10px;
+        padding:.65rem .8rem;
+        font-size:.88rem;
+      }
+      .stHeadingWithActionElements a { display:none !important; }
       [data-testid="stMetric"] {
-        background:#FFFFFF;
-        border:1px solid var(--line); border-radius:12px;
-        padding:14px 16px !important;
-        box-shadow:0 5px 16px rgba(23,74,126,.08);
+        background:linear-gradient(145deg, #FFFFFF 0%, #F8FBFD 100%);
+        border:1px solid var(--line);
+        border-top:4px solid var(--blue);
+        border-radius:14px;
+        padding:13px 16px 15px !important;
+        box-shadow:var(--shadow);
         height: 128px; min-height: 128px; box-sizing: border-box;
         display:flex; flex-direction:column; justify-content:flex-start;
         align-items:stretch; overflow:hidden;
+        transition:transform .18s ease, box-shadow .18s ease;
+      }
+      [data-testid="stMetric"]:hover {
+        transform:translateY(-2px);
+        box-shadow:0 14px 30px rgba(24,53,82,.13);
       }
       [data-testid="stMetricLabel"] {
-        color:#174A7E; font-size:14px !important; line-height:20px !important;
+        color:#405A73 !important; font-size:14px !important; line-height:20px !important;
         font-weight:700; min-height:20px; height:20px;
         display:flex; align-items:center; margin:0 !important;
       }
       [data-testid="stMetricLabel"] p {
+        color:#405A73 !important;
         font-size:14px !important; line-height:20px !important;
         margin:0 !important; white-space:nowrap;
       }
       [data-testid="stMetricValue"] {
-        color:var(--navy); font-size:32px !important; line-height:40px !important;
-        font-weight:500; min-height:40px; height:40px; margin-top:8px !important;
+        color:var(--deep-navy) !important; font-size:32px !important; line-height:40px !important;
+        font-weight:750; min-height:40px; height:40px; margin-top:8px !important;
         display:flex; align-items:center;
       }
       [data-testid="stMetricValue"] > div {
+        color:var(--deep-navy) !important;
         font-size:32px !important; line-height:40px !important;
       }
       [data-testid="stMetricDelta"] {
+        color:#36536D !important;
         font-size:12px !important; line-height:16px !important;
         min-height:16px; margin-top:4px !important;
       }
+      [data-testid="stProgress"] {
+        background:#FFFFFF;
+        border:1px solid var(--line);
+        border-radius:12px;
+        padding:.7rem .85rem .65rem;
+        box-shadow:0 4px 14px rgba(24,53,82,.06);
+      }
+      [data-testid="stProgress"] p {
+        color:#304D68 !important;
+        font-weight:650;
+      }
+      [data-testid="stProgressBar"] > div { background:#D8E3EC; }
+      [data-testid="stProgressBar"] > div > div {
+        background:linear-gradient(90deg, var(--blue), var(--teal)) !important;
+      }
+      [data-baseweb="tab-list"] {
+        gap:.35rem;
+        background:#FFFFFF;
+        border:1px solid var(--line);
+        border-radius:13px;
+        padding:.35rem;
+        box-shadow:0 5px 18px rgba(24,53,82,.07);
+      }
+      [data-baseweb="tab"] {
+        height:2.75rem;
+        padding:0 1.15rem;
+        border-radius:9px;
+        color:#405A73 !important;
+        font-weight:650;
+      }
+      [data-baseweb="tab"] p { color:#405A73 !important; font-weight:650; }
+      [data-baseweb="tab"]:hover { background:#EEF4F9; }
+      [data-baseweb="tab"][aria-selected="true"] {
+        background:var(--navy) !important;
+        color:#FFFFFF !important;
+      }
+      [data-baseweb="tab"][aria-selected="true"] p { color:#FFFFFF !important; }
+      [data-baseweb="tab-highlight"] { display:none; }
       [data-testid="stPlotlyChart"] {
-        background:var(--card); border:1px solid var(--line); border-radius:14px;
-        padding:8px; box-shadow:0 5px 18px rgba(23,74,126,.08);
+        background:var(--card); border:1px solid var(--line); border-radius:15px;
+        padding:10px; box-shadow:var(--shadow);
         overflow:hidden;
       }
-      .quality-ok { padding:12px; border-radius:8px; background:#eaf8f0; color:#17653a; }
-      .small-note { color:#526F8E; font-size:.86rem; }
-      h1, h2, h3 { color:var(--navy); }
+      [data-testid="stDataFrame"] {
+        background:#FFFFFF;
+        border:1px solid var(--line);
+        border-radius:14px;
+        padding:.35rem;
+        box-shadow:var(--shadow);
+        overflow:hidden;
+      }
+      .quality-ok { padding:12px; border-radius:9px; background:#E8F6F0; color:#17653A; }
+      .small-note { color:var(--muted); font-size:.86rem; }
+      .stButton > button,
+      div[data-testid="stDownloadButton"] button {
+        border-radius:9px !important;
+        border:1px solid #B8CBDB !important;
+        background:#FFFFFF !important;
+        color:var(--navy) !important;
+        font-weight:700 !important;
+        box-shadow:0 3px 10px rgba(24,53,82,.08);
+      }
+      .stButton > button:hover,
+      div[data-testid="stDownloadButton"] button:hover {
+        border-color:var(--blue) !important;
+        background:#EAF3FB !important;
+        color:var(--deep-navy) !important;
+      }
+      .stButton > button[kind="primary"] {
+        background:linear-gradient(135deg, var(--navy), var(--blue)) !important;
+        color:#FFFFFF !important;
+        border-color:var(--navy) !important;
+      }
       div[data-testid="stDownloadButton"] button { width:100%; }
     </style>
     """,
@@ -391,44 +524,16 @@ def build_export_xlsx(frame: pd.DataFrame) -> bytes:
                 excel_row.append(value)
         worksheet.append(excel_row)
 
-    header_fill = PatternFill("solid", fgColor="174A7E")
+    header_fill = PatternFill("solid", fgColor="0B2E59")
     header_font = Font(bold=True, color="FFFFFF")
-    thin_side = Side(style="thin", color="D7E3EF")
-    cell_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
     for cell in worksheet[1]:
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        cell.border = cell_border
-
-    # Use the same blue / turquoise / orange palette as the dashboard. Rows are
-    # deliberately equal-height and lightly striped for easier horizontal reading.
-    row_fills = [
-        PatternFill("solid", fgColor="F2F8FD"),
-        PatternFill("solid", fgColor="EAF9FA"),
-        PatternFill("solid", fgColor="FFF6E8"),
-    ]
-    for row_number in range(2, worksheet.max_row + 1):
-        worksheet.row_dimensions[row_number].height = 24
-        row_fill = row_fills[(row_number - 2) % len(row_fills)]
-        for cell in worksheet[row_number]:
-            cell.fill = row_fill
-            cell.border = cell_border
-            cell.alignment = Alignment(vertical="center", wrap_text=True)
 
     worksheet.freeze_panes = "A2"
+    worksheet.auto_filter.ref = worksheet.dimensions
     worksheet.row_dimensions[1].height = 34
-
-    if worksheet.max_row >= 2:
-        excel_table = Table(displayName="DocumentListTable", ref=worksheet.dimensions)
-        excel_table.tableStyleInfo = TableStyleInfo(
-            name="TableStyleMedium2",
-            showFirstColumn=False,
-            showLastColumn=False,
-            showRowStripes=True,
-            showColumnStripes=False,
-        )
-        worksheet.add_table(excel_table)
 
     for col_index, column in enumerate(export.columns, start=1):
         sample = export[column].dropna().astype(str).head(300)
@@ -515,53 +620,66 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
       <meta charset="utf-8">
       <style>
         :root {{
-          --navy:#174A7E; --deep:#0F4C81; --blue:#1473E6;
-           --line:#C9D9E8; --grid:#D7E3EF; --page:#FFFFFF; --head:#174A7E;
+          color-scheme:light;
+          --ink:#13283F; --muted:#526A82; --navy:#0B3A63;
+          --deep:#082E4F; --blue:#1E6FAE; --teal:#0B8F92;
+          --line:#CFDCE7; --grid:#DEE7EF; --page:#FFFFFF; --head:#0B3A63;
         }}
         * {{ box-sizing:border-box; }}
-        html, body {{ margin:0; padding:0; background:transparent; font-family:Arial,sans-serif; color:#173A5E; }}
-        .table-card {{ border:1px solid var(--line); border-radius:12px; background:var(--page); overflow:hidden; }}
-        .toolbar {{
-          display:flex; justify-content:space-between; align-items:center; padding:9px 12px;
-           background:linear-gradient(90deg,#E7F0F8 0%,#EAF9FA 58%,#FFF3E2 100%);
-           border-bottom:1px solid var(--line); font-size:12px; color:#526F8E;
+        html, body {{
+          margin:0; padding:0; background:transparent;
+          font-family:"Segoe UI", Inter, Arial, sans-serif; color:var(--ink);
         }}
-        .hint {{ font-weight:600; color:var(--deep); }}
+        .table-card {{
+          border:1px solid #BDD0DF; border-radius:14px; background:var(--page);
+          overflow:hidden; box-shadow:0 10px 26px rgba(24,53,82,.10);
+        }}
+        .toolbar {{
+          display:flex; justify-content:space-between; align-items:center; gap:16px; padding:11px 14px;
+          background:linear-gradient(90deg, #EAF2F8 0%, #F5F8FB 100%);
+          border-bottom:1px solid var(--line); font-size:12px; color:#425D76;
+        }}
+        .hint {{ font-weight:650; color:#284A68; }}
+        #rowCount {{
+          flex:0 0 auto; border-radius:999px; padding:4px 9px;
+          background:#DDECF6; color:var(--navy); font-weight:750;
+        }}
         .table-wrap {{ height:570px; overflow:auto; }}
         table {{ border-collapse:separate; border-spacing:0; min-width:2495px; width:100%; table-layout:fixed; }}
         thead {{ position:sticky; top:0; z-index:5; }}
         th {{
-          background:var(--head); border-right:1px solid var(--line); border-bottom:1px solid var(--line);
-          padding:8px 9px 9px; text-align:left; vertical-align:top;
+          background:linear-gradient(180deg, #114D7E 0%, var(--head) 100%);
+          border-right:1px solid rgba(255,255,255,.17); border-bottom:1px solid #062D4D;
+          padding:9px 9px 10px; text-align:left; vertical-align:top;
         }}
         th:last-child, td:last-child {{ border-right:none; }}
         .sort-button {{
-          width:100%; border:0; background:transparent; padding:0 0 6px; text-align:left;
-           color:#FFFFFF; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;
+          width:100%; border:0; background:transparent; padding:0 0 7px; text-align:left;
+          color:#FFFFFF; font-size:12px; font-weight:750; cursor:pointer; white-space:nowrap;
         }}
-         .sort-button:hover {{ color:#C9F4F6; }}
-         .sort-mark {{ float:right; color:#FFD69E; }}
+        .sort-button:hover {{ color:#D7F3F3; }}
+        .sort-mark {{ float:right; color:#75D7D4; }}
         .column-search {{
-          width:100%; height:32px; border:1px solid #C8D7E6; border-radius:7px;
-           background:#FFFFFF; color:#173A5E; padding:6px 8px; font-size:12px; outline:none;
+          width:100%; height:33px; border:1px solid #AEC5D8; border-radius:7px;
+          background:#FFFFFF; color:var(--ink); padding:6px 8px; font-size:12px; outline:none;
         }}
-        .column-search:focus {{ border-color:var(--blue); box-shadow:0 0 0 2px rgba(20,115,230,.12); }}
-         tbody tr:nth-child(3n+1) {{ background:#F2F8FD; }}
-         tbody tr:nth-child(3n+2) {{ background:#EAF9FA; }}
-         tbody tr:nth-child(3n) {{ background:#FFF6E8; }}
-         tbody tr:hover {{ background:#DDEFFD; }}
+        .column-search::placeholder {{ color:#75889A; opacity:1; }}
+        .column-search:focus {{ border-color:#43C3C2; box-shadow:0 0 0 3px rgba(67,195,194,.22); }}
+        tbody tr {{ background:#FFFFFF; }}
+        tbody tr:nth-child(even) {{ background:#EDF4F9; }}
+        tbody tr:hover {{ background:#DDF1F0; }}
         td {{
           border-right:1px solid var(--grid); border-bottom:1px solid var(--grid);
-           height:44px; padding:8px; font-size:12px; line-height:17px; vertical-align:middle;
-          white-space:normal; overflow-wrap:anywhere;
+          padding:9px 8px; font-size:12px; line-height:18px; vertical-align:top;
+          color:var(--ink); white-space:normal; overflow-wrap:anywhere;
         }}
-        .empty {{ padding:30px; text-align:center; color:#6A829A; }}
+        .empty {{ padding:30px; text-align:center; color:#526A82; background:#F8FAFC; }}
       </style>
     </head>
     <body>
       <div class="table-card">
         <div class="toolbar">
-           <span class="hint">Use commas, semicolons, or new lines for AND terms in the same cell. Filters across columns also use AND. Click a title to sort.</span>
+          <span class="hint">Use commas, semicolons, or new lines for OR terms in a column. Filters across columns use AND. Click a title to sort.</span>
           <span id="rowCount"></span>
         </div>
         <div class="table-wrap">
@@ -647,7 +765,7 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
             const terms = searchTerms(filters[column.key]);
             if (!terms.length) return true;
             const cellText = normalizeSearch(row[column.key].display);
-            return terms.every(term => cellText.includes(term));
+            return terms.some(term => cellText.includes(term));
           }}));
           if (!sortKey) return result;
           return result.sort((a, b) => {{
@@ -695,36 +813,6 @@ def normalised_options(series: pd.Series) -> list[str]:
     return sorted(str(value) for value in series.dropna().unique())
 
 
-def style_colored_table(frame: pd.DataFrame) -> pd.io.formats.style.Styler:
-    """Apply the dashboard palette and equal row spacing to Streamlit tables."""
-
-    row_colors = ("#F2F8FD", "#EAF9FA", "#FFF6E8")
-
-    def color_row(row: pd.Series) -> list[str]:
-        color = row_colors[int(row.name) % len(row_colors)]
-        return [
-            f"background-color:{color};color:#173A5E;"
-            "border:1px solid #D7E3EF;height:38px;vertical-align:middle"
-        ] * len(row)
-
-    return frame.style.apply(color_row, axis=1).set_table_styles(
-        [
-            {
-                "selector": "th",
-                "props": [
-                    ("background-color", "#174A7E"),
-                    ("color", "#FFFFFF"),
-                    ("font-weight", "700"),
-                    ("border", "1px solid #C9D9E8"),
-                    ("height", "38px"),
-                    ("vertical-align", "middle"),
-                ],
-            },
-            {"selector": "td", "props": [("padding", "8px")]},
-        ]
-    )
-
-
 def filter_frame(
     frame: pd.DataFrame,
     disciplines: list[str],
@@ -747,20 +835,13 @@ def filter_frame(
         if selected_values:
             filtered = filtered[filtered[column].isin(selected_values)]
 
-    # Multiple comma/semicolon/new-line terms use AND within the same record.
-    # For example, "procedure, Flushing" keeps only records whose combined
-    # Document No. / Document Title / Remarks text contains both expressions.
-    terms = [term.strip() for term in re.split(r"[,;\n|]+", search_text) if term.strip()]
-    if terms:
-        searchable_text = (
-            filtered[["Document No.", "Document Title", "Remarks"]]
-            .fillna("")
-            .astype(str)
-            .agg(" ".join, axis=1)
+    terms = [term.strip() for term in search_text.replace(";", " ").split() if term.strip()]
+    for term in terms:
+        mask = (
+            filtered["Document No."].fillna("").str.contains(term, case=False, regex=False)
+            | filtered["Document Title"].fillna("").str.contains(term, case=False, regex=False)
+            | filtered["Remarks"].fillna("").str.contains(term, case=False, regex=False)
         )
-        mask = pd.Series(True, index=filtered.index)
-        for term in terms:
-            mask &= searchable_text.str.contains(term, case=False, regex=False)
         filtered = filtered[mask]
 
     return filtered.sort_values(["Plan Issue Date", "Discipline", "Document No."], na_position="last")
@@ -878,7 +959,7 @@ actions = st.sidebar.multiselect(
 )
 search_text = st.sidebar.text_input(
     "Search document no. / title / remarks",
-    placeholder="e.g. procedure, Flushing (AND)",
+    placeholder="e.g. PIP procedure",
     key="flt_search",
 )
 
@@ -937,7 +1018,7 @@ with summary_tab:
             y="Documents",
             title="Document Count by Discipline",
             color="Documents",
-            color_continuous_scale=["#B8DDF7", "#1473E6", "#174A7E"],
+            color_continuous_scale=["#BDE5E5", "#2F80C1", "#0B3A63"],
             text_auto=True,
             category_orders={"Discipline": discipline_counts["Discipline"].tolist()},
         )
@@ -945,14 +1026,14 @@ with summary_tab:
         fig_discipline.update_xaxes(
             tickangle=-45,
             title_text="Discipline",
-            tickfont=dict(size=10, color="#174A7E"),
+            tickfont=dict(size=10, color="#23435F"),
             showgrid=False,
         )
         fig_discipline.update_yaxes(
             title_text="Documents",
             rangemode="tozero",
-            gridcolor="#DCE7F2",
-            zerolinecolor="#C7D7E7",
+            gridcolor="#E2E9F0",
+            zerolinecolor="#CBD8E4",
         )
         fig_discipline.update_layout(
             template="plotly_white",
@@ -960,8 +1041,8 @@ with summary_tab:
             coloraxis_showscale=False,
             paper_bgcolor="#ffffff",
             plot_bgcolor="#ffffff",
-            font=dict(color="#174A7E", family="Arial"),
-            title=dict(font=dict(size=16, color="#0F4C81"), x=0.02, xanchor="left"),
+            font=dict(color="#1B334A", family="Segoe UI"),
+            title=dict(font=dict(size=16, color="#0B3A63"), x=0.02, xanchor="left"),
             margin=dict(l=45, r=18, t=65, b=78),
         )
         st.plotly_chart(fig_discipline, width="stretch")
@@ -980,7 +1061,7 @@ with summary_tab:
             barmode="group",
             title="Partner & Deliverable Type Distribution",
             text_auto=True,
-            color_discrete_map={"External": "#1473E6", "Internal": "#00B8C4"},
+            color_discrete_map={"External": "#1E6FAE", "Internal": "#0B8F92"},
             labels={"Responsible": "Parner"},
         )
         fig_ownership.update_traces(textposition="outside", cliponaxis=False)
@@ -988,16 +1069,16 @@ with summary_tab:
         fig_ownership.update_yaxes(
             title_text="Documents",
             rangemode="tozero",
-            gridcolor="#DCE7F2",
-            zerolinecolor="#C7D7E7",
+            gridcolor="#E2E9F0",
+            zerolinecolor="#CBD8E4",
         )
         fig_ownership.update_layout(
             template="plotly_white",
             height=430,
             paper_bgcolor="#ffffff",
             plot_bgcolor="#ffffff",
-            font=dict(color="#174A7E", family="Arial"),
-            title=dict(font=dict(size=16, color="#0F4C81"), x=0.02, xanchor="left"),
+            font=dict(color="#1B334A", family="Segoe UI"),
+            title=dict(font=dict(size=16, color="#0B3A63"), x=0.02, xanchor="left"),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -1018,7 +1099,7 @@ with summary_tab:
             values="Documents",
             hole=.55,
             title="New / Update Distribution",
-            color_discrete_map={"New": "#1473E6", "Update": "#FF9818"},
+            color_discrete_map={"New": "#1E6FAE", "Update": "#E67E22"},
         )
         fig_action.update_traces(
             textposition="inside",
@@ -1030,8 +1111,8 @@ with summary_tab:
             height=430,
             paper_bgcolor="#ffffff",
             plot_bgcolor="#ffffff",
-            font=dict(color="#174A7E", family="Arial"),
-            title=dict(font=dict(size=16, color="#0F4C81"), x=0.02, xanchor="left"),
+            font=dict(color="#1B334A", family="Segoe UI"),
+            title=dict(font=dict(size=16, color="#0B3A63"), x=0.02, xanchor="left"),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -1059,7 +1140,7 @@ with summary_tab:
         .sort_values("Documents", ascending=False)
     )
     st.dataframe(
-        style_colored_table(area_summary),
+        area_summary,
         hide_index=True,
         width="stretch",
         column_config={
@@ -1083,12 +1164,26 @@ with schedule_tab:
         color="Responsible",
         barmode="stack",
         title="Monthly Plan by Plan Issue Date (Column M)",
-        color_discrete_map={"RET": "#00B8C4", "TOYO": "#1473E6"},
+        color_discrete_map={"RET": "#0B8F92", "TOYO": "#1E6FAE"},
         text_auto=True,
         labels={"Responsible": "Parner"},
     )
     fig_monthly.update_xaxes(dtick="M1", tickformat="%b\n%Y")
-    fig_monthly.update_layout(height=520, margin=dict(l=20, r=20, t=60, b=20))
+    fig_monthly.update_yaxes(
+        gridcolor="#E2E9F0",
+        zerolinecolor="#CBD8E4",
+        title_text="Documents",
+    )
+    fig_monthly.update_layout(
+        template="plotly_white",
+        height=520,
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        font=dict(color="#1B334A", family="Segoe UI"),
+        title=dict(font=dict(size=18, color="#0B3A63"), x=0.02, xanchor="left"),
+        legend=dict(title_text="Parner", bgcolor="rgba(255,255,255,.75)"),
+        margin=dict(l=45, r=20, t=70, b=30),
+    )
     st.plotly_chart(fig_monthly, width="stretch")
 
     monthly_table = (
@@ -1102,7 +1197,7 @@ with schedule_tab:
     total_row = monthly_table.sum(axis=0).to_frame().T
     total_row.index = ["Total"]
     monthly_table = pd.concat([monthly_table, total_row]).reset_index()
-    st.dataframe(style_colored_table(monthly_table), hide_index=True, width="stretch")
+    st.dataframe(monthly_table, hide_index=True, width="stretch")
 
 with detail_tab:
     detail_frame = filtered.copy()
