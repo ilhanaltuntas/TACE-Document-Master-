@@ -17,13 +17,15 @@ from datetime import date, datetime
 from io import BytesIO
 import json
 from pathlib import Path
+import re
 from typing import BinaryIO
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils import get_column_letter
 
 SHEET_NAME = "Phase-2 Deliverables"
@@ -389,16 +391,44 @@ def build_export_xlsx(frame: pd.DataFrame) -> bytes:
                 excel_row.append(value)
         worksheet.append(excel_row)
 
-    header_fill = PatternFill("solid", fgColor="0B2E59")
+    header_fill = PatternFill("solid", fgColor="174A7E")
     header_font = Font(bold=True, color="FFFFFF")
+    thin_side = Side(style="thin", color="D7E3EF")
+    cell_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
     for cell in worksheet[1]:
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border = cell_border
+
+    # Use the same blue / turquoise / orange palette as the dashboard. Rows are
+    # deliberately equal-height and lightly striped for easier horizontal reading.
+    row_fills = [
+        PatternFill("solid", fgColor="F2F8FD"),
+        PatternFill("solid", fgColor="EAF9FA"),
+        PatternFill("solid", fgColor="FFF6E8"),
+    ]
+    for row_number in range(2, worksheet.max_row + 1):
+        worksheet.row_dimensions[row_number].height = 24
+        row_fill = row_fills[(row_number - 2) % len(row_fills)]
+        for cell in worksheet[row_number]:
+            cell.fill = row_fill
+            cell.border = cell_border
+            cell.alignment = Alignment(vertical="center", wrap_text=True)
 
     worksheet.freeze_panes = "A2"
-    worksheet.auto_filter.ref = worksheet.dimensions
     worksheet.row_dimensions[1].height = 34
+
+    if worksheet.max_row >= 2:
+        excel_table = Table(displayName="DocumentListTable", ref=worksheet.dimensions)
+        excel_table.tableStyleInfo = TableStyleInfo(
+            name="TableStyleMedium2",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=False,
+        )
+        worksheet.add_table(excel_table)
 
     for col_index, column in enumerate(export.columns, start=1):
         sample = export[column].dropna().astype(str).head(300)
@@ -486,14 +516,15 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
       <style>
         :root {{
           --navy:#174A7E; --deep:#0F4C81; --blue:#1473E6;
-          --line:#D7E3EF; --grid:#E3EBF4; --page:#FFFFFF; --head:#F3F7FB;
+           --line:#C9D9E8; --grid:#D7E3EF; --page:#FFFFFF; --head:#174A7E;
         }}
         * {{ box-sizing:border-box; }}
         html, body {{ margin:0; padding:0; background:transparent; font-family:Arial,sans-serif; color:#173A5E; }}
         .table-card {{ border:1px solid var(--line); border-radius:12px; background:var(--page); overflow:hidden; }}
         .toolbar {{
           display:flex; justify-content:space-between; align-items:center; padding:9px 12px;
-          background:#F8FBFE; border-bottom:1px solid var(--line); font-size:12px; color:#526F8E;
+           background:linear-gradient(90deg,#E7F0F8 0%,#EAF9FA 58%,#FFF3E2 100%);
+           border-bottom:1px solid var(--line); font-size:12px; color:#526F8E;
         }}
         .hint {{ font-weight:600; color:var(--deep); }}
         .table-wrap {{ height:570px; overflow:auto; }}
@@ -506,20 +537,22 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
         th:last-child, td:last-child {{ border-right:none; }}
         .sort-button {{
           width:100%; border:0; background:transparent; padding:0 0 6px; text-align:left;
-          color:var(--deep); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;
+           color:#FFFFFF; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;
         }}
-        .sort-button:hover {{ color:var(--blue); }}
-        .sort-mark {{ float:right; color:var(--blue); }}
+         .sort-button:hover {{ color:#C9F4F6; }}
+         .sort-mark {{ float:right; color:#FFD69E; }}
         .column-search {{
           width:100%; height:32px; border:1px solid #C8D7E6; border-radius:7px;
-          background:#FFFFFF; color:#173A5E; padding:6px 8px; font-size:12px; outline:none;
+           background:#FFFFFF; color:#173A5E; padding:6px 8px; font-size:12px; outline:none;
         }}
         .column-search:focus {{ border-color:var(--blue); box-shadow:0 0 0 2px rgba(20,115,230,.12); }}
-        tbody tr:nth-child(even) {{ background:#F9FBFD; }}
-        tbody tr:hover {{ background:#EDF5FC; }}
+         tbody tr:nth-child(3n+1) {{ background:#F2F8FD; }}
+         tbody tr:nth-child(3n+2) {{ background:#EAF9FA; }}
+         tbody tr:nth-child(3n) {{ background:#FFF6E8; }}
+         tbody tr:hover {{ background:#DDEFFD; }}
         td {{
           border-right:1px solid var(--grid); border-bottom:1px solid var(--grid);
-          padding:8px; font-size:12px; line-height:17px; vertical-align:top;
+           height:44px; padding:8px; font-size:12px; line-height:17px; vertical-align:middle;
           white-space:normal; overflow-wrap:anywhere;
         }}
         .empty {{ padding:30px; text-align:center; color:#6A829A; }}
@@ -528,7 +561,7 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
     <body>
       <div class="table-card">
         <div class="toolbar">
-          <span class="hint">Use commas, semicolons, or new lines for OR terms in a column. Filters across columns use AND. Click a title to sort.</span>
+           <span class="hint">Use commas, semicolons, or new lines for AND terms in the same cell. Filters across columns also use AND. Click a title to sort.</span>
           <span id="rowCount"></span>
         </div>
         <div class="table-wrap">
@@ -614,7 +647,7 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
             const terms = searchTerms(filters[column.key]);
             if (!terms.length) return true;
             const cellText = normalizeSearch(row[column.key].display);
-            return terms.some(term => cellText.includes(term));
+            return terms.every(term => cellText.includes(term));
           }}));
           if (!sortKey) return result;
           return result.sort((a, b) => {{
@@ -662,6 +695,36 @@ def normalised_options(series: pd.Series) -> list[str]:
     return sorted(str(value) for value in series.dropna().unique())
 
 
+def style_colored_table(frame: pd.DataFrame) -> pd.io.formats.style.Styler:
+    """Apply the dashboard palette and equal row spacing to Streamlit tables."""
+
+    row_colors = ("#F2F8FD", "#EAF9FA", "#FFF6E8")
+
+    def color_row(row: pd.Series) -> list[str]:
+        color = row_colors[int(row.name) % len(row_colors)]
+        return [
+            f"background-color:{color};color:#173A5E;"
+            "border:1px solid #D7E3EF;height:38px;vertical-align:middle"
+        ] * len(row)
+
+    return frame.style.apply(color_row, axis=1).set_table_styles(
+        [
+            {
+                "selector": "th",
+                "props": [
+                    ("background-color", "#174A7E"),
+                    ("color", "#FFFFFF"),
+                    ("font-weight", "700"),
+                    ("border", "1px solid #C9D9E8"),
+                    ("height", "38px"),
+                    ("vertical-align", "middle"),
+                ],
+            },
+            {"selector": "td", "props": [("padding", "8px")]},
+        ]
+    )
+
+
 def filter_frame(
     frame: pd.DataFrame,
     disciplines: list[str],
@@ -684,13 +747,20 @@ def filter_frame(
         if selected_values:
             filtered = filtered[filtered[column].isin(selected_values)]
 
-    terms = [term.strip() for term in search_text.replace(";", " ").split() if term.strip()]
-    for term in terms:
-        mask = (
-            filtered["Document No."].fillna("").str.contains(term, case=False, regex=False)
-            | filtered["Document Title"].fillna("").str.contains(term, case=False, regex=False)
-            | filtered["Remarks"].fillna("").str.contains(term, case=False, regex=False)
+    # Multiple comma/semicolon/new-line terms use AND within the same record.
+    # For example, "procedure, Flushing" keeps only records whose combined
+    # Document No. / Document Title / Remarks text contains both expressions.
+    terms = [term.strip() for term in re.split(r"[,;\n|]+", search_text) if term.strip()]
+    if terms:
+        searchable_text = (
+            filtered[["Document No.", "Document Title", "Remarks"]]
+            .fillna("")
+            .astype(str)
+            .agg(" ".join, axis=1)
         )
+        mask = pd.Series(True, index=filtered.index)
+        for term in terms:
+            mask &= searchable_text.str.contains(term, case=False, regex=False)
         filtered = filtered[mask]
 
     return filtered.sort_values(["Plan Issue Date", "Discipline", "Document No."], na_position="last")
@@ -808,7 +878,7 @@ actions = st.sidebar.multiselect(
 )
 search_text = st.sidebar.text_input(
     "Search document no. / title / remarks",
-    placeholder="e.g. PIP procedure",
+    placeholder="e.g. procedure, Flushing (AND)",
     key="flt_search",
 )
 
@@ -989,7 +1059,7 @@ with summary_tab:
         .sort_values("Documents", ascending=False)
     )
     st.dataframe(
-        area_summary,
+        style_colored_table(area_summary),
         hide_index=True,
         width="stretch",
         column_config={
@@ -1032,7 +1102,7 @@ with schedule_tab:
     total_row = monthly_table.sum(axis=0).to_frame().T
     total_row.index = ["Total"]
     monthly_table = pd.concat([monthly_table, total_row]).reset_index()
-    st.dataframe(monthly_table, hide_index=True, width="stretch")
+    st.dataframe(style_colored_table(monthly_table), hide_index=True, width="stretch")
 
 with detail_tab:
     detail_frame = filtered.copy()
