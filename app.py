@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from io import BytesIO
+import html
 import json
 from pathlib import Path
 from typing import BinaryIO
@@ -348,21 +349,111 @@ st.markdown(
       [data-testid="stSidebar"] [data-baseweb="tag"] span {
         color:#173A57 !important;
       }
-      [data-testid="stAppDeployButton"], [data-testid="stToolbar"], #MainMenu {
+      [data-testid="stAppDeployButton"], #MainMenu {
         display:none !important;
+      }
+      /* Keep sidebar show/hide controls reachable at all times. */
+      [data-testid="stSidebarCollapseButton"],
+      [data-testid="stSidebarCollapsedControl"] {
+        display:flex !important;
+        visibility:visible !important;
+        opacity:1 !important;
+        pointer-events:auto !important;
+        z-index:1000000 !important;
+      }
+      [data-testid="stSidebarCollapseButton"] button,
+      [data-testid="stSidebarCollapsedControl"] button {
+        display:flex !important;
+        visibility:visible !important;
+        opacity:1 !important;
+        background:#FFFFFF !important;
+        color:transparent !important;
+        font-size:0 !important;
+        border:1px solid #AFC7D8 !important;
+        border-radius:9px !important;
+        box-shadow:0 3px 9px rgba(24,53,82,.14) !important;
+        min-width:34px !important;
+        width:34px !important;
+        height:32px !important;
+        align-items:center !important;
+        justify-content:center !important;
+      }
+      [data-testid="stSidebarCollapseButton"] button > *,
+      [data-testid="stSidebarCollapsedControl"] button > * {
+        display:none !important;
+      }
+      [data-testid="stSidebarCollapseButton"] button::after {
+        content:"<<" !important;
+        display:block !important;
+        color:#0B3A63 !important;
+        font-size:19px !important;
+        line-height:1 !important;
+        font-weight:900 !important;
+        letter-spacing:-3px !important;
+      }
+      [data-testid="stSidebarCollapsedControl"] button::after {
+        content:">>" !important;
+        display:block !important;
+        color:#0B3A63 !important;
+        font-size:19px !important;
+        line-height:1 !important;
+        font-weight:900 !important;
+        letter-spacing:-3px !important;
+      }
+      [data-testid="stSidebarCollapsedControl"] {
+        position:fixed !important;
+        top:.75rem !important;
+        left:.65rem !important;
       }
       .block-container {
         max-width:1680px;
-        padding-top:1.35rem;
-        padding-bottom:2.5rem;
+        padding-top:2.75rem !important;
+        padding-bottom:.75rem !important;
+      }
+      .block-container > [data-testid="stVerticalBlock"],
+      [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] {
+        gap:1rem !important;
+      }
+      [data-testid="stHorizontalBlock"] {
+        gap:1rem !important;
+      }
+      /* Keep title and REFRESH below Streamlit fixed header. */
+      [data-testid="stMainBlockContainer"] {
+        padding-top:2.75rem !important;
+      }
+      [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:first-of-type {
+        position:relative !important;
+        z-index:5 !important;
+        min-height:58px !important;
+        overflow:visible !important;
+      }
+      [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:first-of-type h1 {
+        margin:0 !important;
+        padding:0 !important;
+        line-height:1.15 !important;
+        overflow:visible !important;
+      }
+      [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:first-of-type [data-testid="stButton"] {
+        margin:0 !important;
+        padding:0 !important;
       }
       h1, h2, h3 {
         color:var(--navy) !important;
         letter-spacing:-.02em;
       }
-      h1 { font-size:2.25rem !important; font-weight:800 !important; }
+      h1 {
+        font-size:2.25rem !important;
+        font-weight:800 !important;
+        margin-top:0 !important;
+        margin-bottom:.25rem !important;
+        padding-top:0 !important;
+      }
       h2 { font-weight:750 !important; }
-      h3 { font-weight:700 !important; }
+      h3 {
+        font-weight:700 !important;
+        margin-top:.35rem !important;
+        margin-bottom:.5rem !important;
+      }
       p, li, label, [data-testid="stCaptionContainer"] {
         color:var(--ink);
       }
@@ -419,6 +510,7 @@ st.markdown(
         border:1px solid var(--line);
         border-radius:12px;
         padding:.7rem .85rem .65rem;
+        margin:0 !important;
         box-shadow:0 4px 14px rgba(24,53,82,.06);
       }
       [data-testid="stProgress"] p {
@@ -429,51 +521,93 @@ st.markdown(
       [data-testid="stProgressBar"] > div > div {
         background:linear-gradient(90deg, var(--blue), var(--teal)) !important;
       }
+      /* Three clearly separated button-style tabs. */
+      [data-testid="stTabs"] [role="tablist"],
       [data-baseweb="tab-list"] {
-        gap:.35rem;
-        background:#FFFFFF;
-        border:1px solid var(--line);
-        border-radius:13px;
-        padding:.35rem;
-        box-shadow:0 5px 18px rgba(24,53,82,.07);
+        display:flex !important;
+        width:min(720px, 100%) !important;
+        gap:1rem !important;
+        padding:.35rem 0 !important;
+        margin:.25rem 0 .9rem 1.25rem !important;
+        background:transparent !important;
+        border:0 !important;
+        box-shadow:none !important;
+        overflow:visible !important;
       }
+      [data-testid="stTabs"] button[role="tab"],
       [data-baseweb="tab"] {
-        height:2.75rem;
-        padding:0 1.15rem;
-        border-radius:9px;
-        border:1px solid transparent;
+        flex:1 1 0 !important;
+        width:auto !important;
+        min-width:150px !important;
+        height:2.85rem !important;
+        min-height:2.85rem !important;
+        justify-content:center !important;
+        padding:0 1.15rem !important;
+        margin:0 !important;
+        border:1px solid #AFC7D8 !important;
+        border-radius:10px !important;
+        background:#FFFFFF !important;
         color:#0B3A63 !important;
         font-weight:750 !important;
         opacity:1 !important;
+        box-shadow:0 3px 9px rgba(24,53,82,.10) !important;
+        transition:all .16s ease !important;
       }
+      [data-testid="stTabs"] button[role="tab"] p,
+      [data-testid="stTabs"] button[role="tab"] span,
       [data-baseweb="tab"] p,
-      [data-baseweb="tab"] span,
-      [data-baseweb="tab"] div {
+      [data-baseweb="tab"] span {
         color:#0B3A63 !important;
-        font-weight:750 !important;
-        opacity:1 !important;
+        font-size:1.02rem !important;
+        font-weight:800 !important;
+        letter-spacing:.01em !important;
+        white-space:nowrap !important;
       }
+      [data-testid="stTabs"] button[role="tab"]:hover,
       [data-baseweb="tab"]:hover {
-        background:#E8F1F8 !important;
-        border-color:#C5D7E5;
+        background:#E9F5FB !important;
+        border-color:#4F91B5 !important;
+        transform:translateY(-1px) !important;
+        box-shadow:0 5px 13px rgba(24,92,130,.16) !important;
       }
+      [data-testid="stTabs"] button[role="tab"][aria-selected="true"],
       [data-baseweb="tab"][aria-selected="true"] {
-        background:linear-gradient(135deg, #0B3A63 0%, #155E91 100%) !important;
-        border-color:#082E4F !important;
-        color:#FFFFFF !important;
-        box-shadow:0 4px 12px rgba(11,58,99,.22);
+        background:linear-gradient(135deg, #1267A5 0%, #0B8F92 100%) !important;
+        border-color:#0B6F86 !important;
+        box-shadow:0 5px 14px rgba(11,111,134,.22) !important;
       }
+      [data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
+      [data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
       [data-baseweb="tab"][aria-selected="true"] p,
-      [data-baseweb="tab"][aria-selected="true"] span,
-      [data-baseweb="tab"][aria-selected="true"] div {
+      [data-baseweb="tab"][aria-selected="true"] span {
         color:#FFFFFF !important;
-        font-weight:750 !important;
-        opacity:1 !important;
+        font-weight:800 !important;
       }
-      [data-baseweb="tab-highlight"] { display:none; }
+      [data-testid="stTabs"] [data-baseweb="tab-highlight"],
+      [data-testid="stTabs"] [data-baseweb="tab-border"],
+      [data-baseweb="tab-highlight"],
+      [data-baseweb="tab-border"] {
+        display:none !important;
+      }
+      /* Clickable KPI cards that navigate to dedicated list views. */
+      .kpi-nav-card {
+        display:flex; flex-direction:column; min-height:122px; padding:14px 16px 12px;
+        background:#FFFFFF; border:1px solid #C7D9E6; border-top:4px solid #1776B6;
+        border-radius:14px; box-shadow:0 5px 14px rgba(24,53,82,.08);
+        text-decoration:none !important; color:#082E4F !important;
+        transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+      }
+      .kpi-nav-card:hover {
+        transform:translateY(-2px); border-color:#6EA9C9;
+        box-shadow:0 8px 19px rgba(24,92,130,.15);
+      }
+      .kpi-nav-label { font-size:13px; font-weight:700; color:#284E6B; }
+      .kpi-nav-value { font-size:31px; line-height:1.15; font-weight:850; margin-top:9px; color:#082E4F; }
+      .kpi-nav-note { font-size:11px; font-weight:650; color:#507089; margin-top:7px; }
       [data-testid="stPlotlyChart"] {
         background:var(--card); border:1px solid var(--line); border-radius:15px;
         padding:10px; box-shadow:var(--shadow);
+        margin:0 !important;
         overflow:hidden;
       }
       [data-testid="stDataFrame"] {
@@ -481,6 +615,7 @@ st.markdown(
         border:1px solid var(--line);
         border-radius:14px;
         padding:.35rem;
+        margin:0 !important;
         box-shadow:var(--shadow);
         overflow:hidden;
       }
@@ -505,6 +640,51 @@ st.markdown(
         background:linear-gradient(135deg, var(--navy), var(--blue)) !important;
         color:#FFFFFF !important;
         border-color:var(--navy) !important;
+      }
+      /* Full-size, readable REFRESH control in the title row. */
+      div[data-testid="stButton"] button[kind="primary"],
+      div[data-testid="stButton"] button[data-testid="stBaseButton-primary"] {
+        width:100% !important;
+        min-width:132px !important;
+        height:48px !important;
+        min-height:48px !important;
+        padding:0 1.15rem !important;
+        border:1px solid #0A4F78 !important;
+        border-radius:11px !important;
+        background:linear-gradient(135deg, #1E6FAE 0%, #0B8F92 100%) !important;
+        color:#FFFFFF !important;
+        box-shadow:0 6px 16px rgba(11,92,125,.22) !important;
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        gap:.4rem !important;
+        white-space:nowrap !important;
+        overflow:visible !important;
+        line-height:1 !important;
+      }
+      div[data-testid="stButton"] button[kind="primary"] p,
+      div[data-testid="stButton"] button[kind="primary"] span,
+      div[data-testid="stButton"] button[data-testid="stBaseButton-primary"] p,
+      div[data-testid="stButton"] button[data-testid="stBaseButton-primary"] span {
+        color:#FFFFFF !important;
+        font-size:.93rem !important;
+        font-weight:800 !important;
+        line-height:1 !important;
+        margin:0 !important;
+        white-space:nowrap !important;
+        text-align:center !important;
+      }
+      div[data-testid="stButton"] button[kind="primary"]:hover,
+      div[data-testid="stButton"] button[data-testid="stBaseButton-primary"]:hover {
+        background:linear-gradient(135deg, #155E91 0%, #087F82 100%) !important;
+        border-color:#063B5E !important;
+        box-shadow:0 8px 19px rgba(11,92,125,.29) !important;
+        transform:translateY(-1px) !important;
+      }
+      div[data-testid="stButton"] button[kind="primary"]:focus-visible,
+      div[data-testid="stButton"] button[data-testid="stBaseButton-primary"]:focus-visible {
+        outline:3px solid rgba(11,143,146,.30) !important;
+        outline-offset:2px !important;
       }
       div[data-testid="stDownloadButton"] button { width:100%; }
     </style>
@@ -698,7 +878,7 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
     <body>
       <div class="table-card">
         <div class="toolbar">
-          <span class="hint">Use commas, semicolons, or new lines for OR terms in a column. Filters across columns use AND. Click a title to sort.</span>
+          <span class="hint">Use commas, semicolons, or new lines for AND terms in a column. All terms must exist in the same cell. Click a title to sort.</span>
           <span id="rowCount"></span>
         </div>
         <div class="table-wrap">
@@ -784,7 +964,7 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
             const terms = searchTerms(filters[column.key]);
             if (!terms.length) return true;
             const cellText = normalizeSearch(row[column.key].display);
-            return terms.some(term => cellText.includes(term));
+            return terms.every(term => cellText.includes(term));
           }}));
           if (!sortKey) return result;
           return result.sort((a, b) => {{
@@ -821,6 +1001,120 @@ def render_document_list_table(frame: pd.DataFrame) -> None:
         width="stretch",
         height=655,
         alt="Searchable and sortable Document List table",
+    )
+
+
+def render_area_summary_table(frame: pd.DataFrame) -> None:
+    """Render the Area summary with a light, high-contrast dashboard style."""
+
+    headers = [
+        ("Area", "Area"),
+        ("Documents", "Documents"),
+        ("RET", "RET"),
+        ("TOYO", "TOYO"),
+        ("External", "External"),
+        ("Internal", "Internal"),
+        ("Document_Progress", "Document Progress"),
+    ]
+    header_html = "".join(
+        f'<th class="{"area-col" if key == "Area" else "number-col"}">{html.escape(label)}</th>'
+        for key, label in headers
+    )
+
+    body_rows: list[str] = []
+    for _, row in frame.iterrows():
+        area = "" if pd.isna(row["Area"]) else html.escape(str(row["Area"]))
+        progress = 0.0 if pd.isna(row["Document_Progress"]) else float(row["Document_Progress"])
+        progress = max(0.0, min(progress, 1.0))
+        progress_percent = progress * 100
+        numeric_cells = "".join(
+            f'<td class="number-col">{int(row[column]):,}</td>'
+            for column in ["Documents", "RET", "TOYO", "External", "Internal"]
+        )
+        body_rows.append(
+            "<tr>"
+            f'<td class="area-col">{area}</td>'
+            f"{numeric_cells}"
+            '<td class="progress-col">'
+            '<div class="progress-wrap">'
+            '<div class="progress-track" aria-hidden="true">'
+            f'<div class="progress-fill" style="width:{progress_percent:.1f}%"></div>'
+            '</div>'
+            f'<span class="progress-value">{progress_percent:.0f}%</span>'
+            '</div>'
+            '</td>'
+            "</tr>"
+        )
+
+    table_html = f"""
+    <!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <style>
+        :root {{ color-scheme:light; }}
+        * {{ box-sizing:border-box; }}
+        html, body {{
+          margin:0; padding:0; background:transparent; color:#13283F;
+          font-family:"Segoe UI", Inter, Arial, sans-serif;
+        }}
+        .summary-card {{
+          width:82%; max-width:1120px; margin:0 auto; overflow:hidden;
+          background:#FFFFFF; border:1px solid #C8D8E5;
+          border-radius:14px; box-shadow:0 8px 22px rgba(24,53,82,.09);
+        }}
+        table {{ width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }}
+        thead th {{
+          height:40px; padding:8px 9px; background:linear-gradient(180deg, #155E91 0%, #0B3A63 100%);
+          color:#FFFFFF; border-right:1px solid rgba(255,255,255,.18);
+          border-bottom:1px solid #082E4F; font-size:13px; line-height:18px;
+          font-weight:750; text-align:center; vertical-align:middle;
+        }}
+        thead th:last-child, tbody td:last-child {{ border-right:none; }}
+        tbody tr {{ background:#F8FBFD; }}
+        tbody tr:nth-child(even) {{ background:#EAF4F8; }}
+        tbody tr:hover {{ background:#DDF1F0; }}
+        tbody td {{
+          height:38px; padding:7px 9px; border-right:1px solid #D7E4ED;
+          border-bottom:1px solid #D7E4ED; color:#173A57; font-size:13px;
+          line-height:18px; font-weight:600; text-align:center; vertical-align:middle;
+        }}
+        tbody tr:last-child td {{ border-bottom:none; }}
+        .area-col {{ width:20%; text-align:left !important; }}
+        .number-col {{ width:9.5%; text-align:center !important; font-variant-numeric:tabular-nums; }}
+        .progress-col {{ width:22.5%; text-align:center !important; }}
+        .progress-wrap {{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; }}
+        .progress-track {{
+          flex:1 1 auto; height:9px; min-width:75px; overflow:hidden;
+          background:#D9E8F2; border:1px solid #C4D8E6; border-radius:999px;
+          box-shadow:inset 0 1px 2px rgba(24,53,82,.06);
+        }}
+        .progress-fill {{
+          height:100%; min-width:6px; border-radius:999px;
+          background:linear-gradient(90deg, #1E6FAE 0%, #0B8F92 100%);
+        }}
+        .progress-value {{
+          flex:0 0 38px; color:#0B3A63; font-weight:750; text-align:right;
+          font-variant-numeric:tabular-nums;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="summary-card">
+        <table aria-label="Summary by Area">
+          <thead><tr>{header_html}</tr></thead>
+          <tbody>{''.join(body_rows)}</tbody>
+        </table>
+      </div>
+    </body>
+    </html>
+    """
+    table_height = min(470, 44 + max(len(frame), 1) * 38 + 4)
+    st.iframe(
+        table_html,
+        width="stretch",
+        height=table_height,
+        alt="Colorful Summary by Area table",
     )
 
 
@@ -992,7 +1286,7 @@ filtered = filter_frame(
     search_text,
 )
 
-title_col, refresh_col = st.columns([8, 1], vertical_alignment="center")
+title_col, refresh_col = st.columns([7.4, 1.25], gap="medium", vertical_alignment="center")
 with title_col:
     st.title("TKPR2 Document Master List Dashboard")
 with refresh_col:
@@ -1007,16 +1301,68 @@ if filtered.empty:
 
 placeholder_count = int(filtered["Is Placeholder"].sum())
 
-kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6, gap="small")
-kpi1.metric("TOTAL DOCUMENT", fmt_int(len(filtered)), delta=f"Total {fmt_int(len(data))}")
-kpi2.metric("RET SCOPE", fmt_int((filtered["Responsible"] == "RET").sum()))
-kpi3.metric("TOYO SCOPE", fmt_int((filtered["Responsible"] == "TOYO").sum()))
-kpi4.metric("External", fmt_int((filtered["Deliverable Type"] == "External").sum()))
-kpi5.metric(
-    "Internal",
-    fmt_int((filtered["Deliverable Type"] == "Internal").sum()),
-)
-kpi6.metric("Document Progress", "5%", delta="Not Published", delta_color="off")
+# KPI cards navigate to a dedicated document-list view using the URL query parameter.
+kpi_view = st.query_params.get("kpi")
+
+kpi_filters = {
+    "total": ("TOTAL DOCUMENT", filtered),
+    "ret": ("RET SCOPE", filtered[filtered["Responsible"] == "RET"]),
+    "toyo": ("TOYO SCOPE", filtered[filtered["Responsible"] == "TOYO"]),
+    "external": ("External", filtered[filtered["Deliverable Type"] == "External"]),
+    "internal": ("Internal", filtered[filtered["Deliverable Type"] == "Internal"]),
+    "progress": ("Document Progress", filtered[filtered["Document Progress"] < 1]),
+}
+
+# Dedicated KPI detail page: only the selected document list is shown.
+if kpi_view in kpi_filters:
+    detail_title, detail_frame = kpi_filters[kpi_view]
+    back_url = "?"
+    st.markdown(
+        f"<a href='{back_url}' target='_self' style='text-decoration:none;color:#1267A5;font-weight:800;font-size:16px;'>‹ BACK TO DASHBOARD</a>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(f"## {detail_title}")
+    count_col, download_col = st.columns([5, 1.35], vertical_alignment="center")
+    with count_col:
+        st.caption(f"{fmt_int(len(detail_frame))} documents")
+    with download_col:
+        safe_name = detail_title.lower().replace(" ", "_").replace("/", "_")
+        st.download_button(
+            "EXCEL DOWNLOAD",
+            data=build_export_xlsx(detail_frame.copy()),
+            file_name=f"{safe_name}_document_list.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+            width="stretch",
+            key=f"download_{kpi_view}",
+        )
+    render_document_list_table(detail_frame.copy())
+    st.stop()
+
+# Dashboard KPI cards. Clicking the card opens the dedicated list page in the same browser tab.
+kpi_cards = [
+    ("TOTAL DOCUMENT", fmt_int(len(filtered)), f"Total {fmt_int(len(data))}", "total"),
+    ("RET SCOPE", fmt_int((filtered["Responsible"] == "RET").sum()), "RET documents", "ret"),
+    ("TOYO SCOPE", fmt_int((filtered["Responsible"] == "TOYO").sum()), "TOYO documents", "toyo"),
+    ("External", fmt_int((filtered["Deliverable Type"] == "External").sum()), "External documents", "external"),
+    ("Internal", fmt_int((filtered["Deliverable Type"] == "Internal").sum()), "Internal documents", "internal"),
+    ("Document Progress", "5%", "Not Published", "progress"),
+]
+
+kpi_cols = st.columns(6, gap="small")
+for col, (label, value, note, key) in zip(kpi_cols, kpi_cards):
+    with col:
+        st.markdown(
+            f"""
+            <a href="?kpi={key}" target="_self" class="kpi-nav-card">
+              <span class="kpi-nav-label">{label}</span>
+              <span class="kpi-nav-value">{value}</span>
+              <span class="kpi-nav-note">{note}</span>
+            </a>
+            """,
+            unsafe_allow_html=True,
+        )
+
 
 summary_tab, schedule_tab, detail_tab = st.tabs(
     ["Overview", "Plan Schedule", "Document List"]
@@ -1041,18 +1387,33 @@ with summary_tab:
             text_auto=True,
             category_orders={"Discipline": discipline_counts["Discipline"].tolist()},
         )
-        fig_discipline.update_traces(textposition="outside", cliponaxis=False)
+        fig_discipline.update_traces(
+            textposition="outside",
+            cliponaxis=False,
+            textfont=dict(size=11, color="#173A57", family="Segoe UI"),
+        )
         fig_discipline.update_xaxes(
             tickangle=-45,
             title_text="Discipline",
-            tickfont=dict(size=10, color="#23435F"),
+            title_font=dict(size=13, color="#183B5B", family="Segoe UI"),
+            tickfont=dict(size=10, color="#304B63", family="Segoe UI"),
+            linecolor="#9FB3C5",
+            tickcolor="#7F96AA",
+            showline=True,
             showgrid=False,
+            automargin=True,
         )
         fig_discipline.update_yaxes(
             title_text="Documents",
+            title_font=dict(size=13, color="#183B5B", family="Segoe UI"),
+            tickfont=dict(size=10, color="#304B63", family="Segoe UI"),
             rangemode="tozero",
             gridcolor="#E2E9F0",
             zerolinecolor="#CBD8E4",
+            linecolor="#9FB3C5",
+            tickcolor="#7F96AA",
+            showline=True,
+            automargin=True,
         )
         fig_discipline.update_layout(
             template="plotly_white",
@@ -1060,8 +1421,8 @@ with summary_tab:
             coloraxis_showscale=False,
             paper_bgcolor="#ffffff",
             plot_bgcolor="#ffffff",
-            font=dict(color="#1B334A", family="Segoe UI"),
-            title=dict(font=dict(size=16, color="#0B3A63"), x=0.02, xanchor="left"),
+            font=dict(color="#1B334A", size=11, family="Segoe UI"),
+            title=dict(font=dict(size=16, color="#082E4F"), x=0.02, xanchor="left"),
             margin=dict(l=45, r=18, t=65, b=78),
         )
         st.plotly_chart(fig_discipline, width="stretch")
@@ -1072,39 +1433,80 @@ with summary_tab:
             .size()
             .reset_index(name="Documents")
         )
+        # One stacked bar per partner: RET and TOYO have their own color families.
         fig_ownership = px.bar(
             ownership,
             x="Responsible",
             y="Documents",
             color="Deliverable Type",
-            barmode="group",
+            barmode="stack",
             title="Partner & Deliverable Type Distribution",
             text_auto=True,
-            color_discrete_map={"External": "#1E6FAE", "Internal": "#0B8F92"},
-            labels={"Responsible": "Parner"},
+            color_discrete_map={"External": "#2563EB", "Internal": "#93C5FD"},
+            labels={"Responsible": "Partner"},
         )
-        fig_ownership.update_traces(textposition="outside", cliponaxis=False)
-        fig_ownership.update_xaxes(showgrid=False, title_text="Parner")
+        partner_colors = {
+            ("RET", "External"): "#2563EB",
+            ("RET", "Internal"): "#93C5FD",
+            ("TOYO", "External"): "#F97316",
+            ("TOYO", "Internal"): "#FDBA74",
+        }
+        for trace in fig_ownership.data:
+            trace.marker.color = [
+                partner_colors.get((str(x), str(trace.name)), "#94A3B8")
+                for x in trace.x
+            ]
+            trace.marker.line.color = "#FFFFFF"
+            trace.marker.line.width = 1.5
+
+        for trace in fig_ownership.data:
+            trace.texttemplate = [f"{trace.name}<br><b>{int(v)}</b>" for v in trace.y]
+
+        fig_ownership.update_traces(
+            textposition="inside",
+            textfont=dict(size=11, color="#FFFFFF", family="Segoe UI", weight="bold"),
+            insidetextanchor="middle",
+            cliponaxis=False,
+        )
+        fig_ownership.update_xaxes(
+            showgrid=False,
+            title_text="Partner",
+            title_font=dict(size=13, color="#183B5B", family="Segoe UI"),
+            tickfont=dict(size=11, color="#304B63", family="Segoe UI"),
+            linecolor="#9FB3C5",
+            tickcolor="#7F96AA",
+            showline=True,
+            automargin=True,
+        )
         fig_ownership.update_yaxes(
             title_text="Documents",
+            title_font=dict(size=13, color="#183B5B", family="Segoe UI"),
+            tickfont=dict(size=10, color="#304B63", family="Segoe UI"),
             rangemode="tozero",
             gridcolor="#E2E9F0",
             zerolinecolor="#CBD8E4",
+            linecolor="#9FB3C5",
+            tickcolor="#7F96AA",
+            showline=True,
+            automargin=True,
         )
         fig_ownership.update_layout(
+            showlegend=False,
             template="plotly_white",
             height=430,
             paper_bgcolor="#ffffff",
             plot_bgcolor="#ffffff",
-            font=dict(color="#1B334A", family="Segoe UI"),
-            title=dict(font=dict(size=16, color="#0B3A63"), x=0.02, xanchor="left"),
+            font=dict(color="#1B334A", size=11, family="Segoe UI"),
+            title=dict(font=dict(size=16, color="#082E4F"), x=0.02, xanchor="left"),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
                 y=1.01,
                 xanchor="right",
                 x=1,
-                title_text="",
+                title=dict(text="", font=dict(size=12, color="#183B5B")),
+                font=dict(size=11, color="#304B63", family="Segoe UI"),
+                bgcolor="rgba(255,255,255,.96)",
             ),
             margin=dict(l=50, r=18, t=88, b=55),
         )
@@ -1123,6 +1525,7 @@ with summary_tab:
         fig_action.update_traces(
             textposition="inside",
             textinfo="percent+label",
+            textfont=dict(size=12, color="#FFFFFF", family="Segoe UI"),
             marker=dict(line=dict(color="#ffffff", width=2)),
         )
         fig_action.update_layout(
@@ -1130,15 +1533,17 @@ with summary_tab:
             height=430,
             paper_bgcolor="#ffffff",
             plot_bgcolor="#ffffff",
-            font=dict(color="#1B334A", family="Segoe UI"),
-            title=dict(font=dict(size=16, color="#0B3A63"), x=0.02, xanchor="left"),
+            font=dict(color="#1B334A", size=11, family="Segoe UI"),
+            title=dict(font=dict(size=16, color="#082E4F"), x=0.02, xanchor="left"),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
                 y=-0.04,
                 xanchor="center",
                 x=0.5,
-                title_text="",
+                title=dict(text="", font=dict(size=12, color="#183B5B")),
+                font=dict(size=11, color="#304B63", family="Segoe UI"),
+                bgcolor="rgba(255,255,255,.96)",
             ),
             margin=dict(l=18, r=18, t=65, b=55),
         )
@@ -1158,16 +1563,7 @@ with summary_tab:
         .reset_index()
         .sort_values("Documents", ascending=False)
     )
-    st.dataframe(
-        area_summary,
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "Document_Progress": st.column_config.ProgressColumn(
-                "Document Progress", format="percent", min_value=0, max_value=1
-            ),
-        },
-    )
+    render_area_summary_table(area_summary)
 
 with schedule_tab:
     monthly = (
@@ -1253,7 +1649,55 @@ with schedule_tab:
     total_row = monthly_table.sum(axis=0).to_frame().T
     total_row.index = ["Total"]
     monthly_table = pd.concat([monthly_table, total_row]).reset_index()
-    st.dataframe(monthly_table, hide_index=True, width="stretch")
+    # Compact, colorful and centered monthly summary table.
+    monthly_view = monthly_table.copy()
+    first_col = monthly_view.columns[0]
+    monthly_view = monthly_view.rename(columns={first_col: "Month"})
+
+    def monthly_row_colors(row):
+        # Color by row instead of by column for a cleaner monthly view.
+        if str(row.get("Month", "")) == "Total":
+            return ["background-color:#16324F;color:#FFFFFF;font-weight:800" for _ in row]
+        row_index = monthly_view.index.get_loc(row.name)
+        color = "#F3F8FC" if row_index % 2 == 0 else "#E4F1F7"
+        return [f"background-color:{color};color:#12344D" for _ in row]
+
+    monthly_styler = (
+        monthly_view.style
+        .set_properties(**{
+            "text-align": "center",
+            "vertical-align": "middle",
+            "font-weight": "600",
+            "border": "1px solid #D4E0E9",
+        })
+        .set_table_styles([
+            {"selector": "th", "props": [
+                ("text-align", "center"),
+                ("vertical-align", "middle"),
+                ("font-weight", "800"),
+                ("background-color", "#0F4C81"),
+                ("color", "white"),
+                ("border", "1px solid #CBD5E1"),
+            ]},
+            {"selector": "td", "props": [("text-align", "center")]},
+        ])
+        .apply(monthly_row_colors, axis=1)
+    )
+
+    table_left, table_center, table_right = st.columns([1.5, 7, 1.5])
+    with table_center:
+        st.dataframe(
+            monthly_styler,
+            hide_index=True,
+            width="stretch",
+            height=min(430, 38 + max(len(monthly_view), 1) * 35),
+            column_config={
+                "Month": st.column_config.TextColumn("Month", width="small"),
+                "RET": st.column_config.NumberColumn("RET", width="small"),
+                "TOYO": st.column_config.NumberColumn("TOYO", width="small"),
+                "Total": st.column_config.NumberColumn("Total", width="small"),
+            },
+        )
 
 with detail_tab:
     detail_frame = filtered.copy()
